@@ -78,5 +78,10 @@ def image_quadrant(im, bbox):
 
     return find_nearest_quadrant()
 
-
-
+def determine_direction_to_move(im, bbox):
+    closest, is_inside = image_quadrant(im, bbox)
+    if not is_inside:
+        # need to compute direction to move to aquire closest
+        pass
+    else:
+        return None
