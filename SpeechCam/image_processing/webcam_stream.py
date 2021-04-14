@@ -1,5 +1,5 @@
 import cv2
-import sys, os
+import sys, os, operator, math
 
 def capture_webcam_image()
     cap = cv2.VideoCapture(0)
@@ -45,9 +45,37 @@ def image_quadrant(im, bbox):
     quadrants["ll"] = ((0,h/2),(w/2,h))
     quadrants["lr"] = ((w/2,h/2),(w,h))
 
+    def compare_tuples(t1, t2, oper):
+        x = t1[0] oper t2[0]
+        y = t1[1] oper t2[1]
+        return x and y
+
+    def compute_distance(pt1, pt2):
+        dist_x = pt2[0] - pt1[0]
+        dist_y = pt2[1] - pt1[1]
+        return math.sqrt(dist_x**2 + dist_y**2)
+
     def find_nearest_quadrant():
         (x,y,w,h) = bbox
-        return quadrant["ul"]
+        corners = ((x,y),(x+w,y+h))
+        closest = (2**64,2**64)
+        closest_quad = ""
+        is_inside = False
+        for quadrant in quadrants:
+            upper = compare_tuples(corners[0], quadrants[quadrant][0], operator.gt)
+            lower = compare_tuples(corners[1], quadrants[quadrant][1], operator.lt)
+            if upper and lower:
+                is_inside = True
+                closest = (0,0)
+                closest_quad = quadrant
+            else:
+                dist_u = compute_distance(corner[0], quadrants[quadrant][0])
+                dist_l = compute_distance(corner[1], quadrants[quadrant][1])
+                if dist_u < closest[0] and dist_l < closest[1]:
+                    closest = (dist_u, dist_l)
+                    closest_quad = quadrant
+        return closest_quad, is_inside
+
     return find_nearest_quadrant()
 
 
