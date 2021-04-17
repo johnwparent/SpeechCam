@@ -119,8 +119,6 @@ def main(argv=None):
     new_im = direct_user(speech_out,desired_quad,faces[0],im)
     ws.save(new_im)
     speech_out.speak("Image captured and saved. Thank you for using SpeechCam! The program will now exit")
-    # face detected, determine if in selected quadrant
-    # if not, prompt user to move in appropriate direction
 
 
 if __name__ == '__main__':
