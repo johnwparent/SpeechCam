@@ -1,11 +1,14 @@
 # Defining python TTS interface for speech cam
 import speech_recognition as sr
 
-def get_interpreter(audio):
+def get_interpreter():
     return sr.Recognizer()
 
 def get_sphinx_interp(recognizer):
     return recognizer.recognize_sphinx
+
+def get_google_interp(recognizer):
+    return recognizer.recognize_google
 
 def get_mic(mic_idx=None):
     if not mic_idx:

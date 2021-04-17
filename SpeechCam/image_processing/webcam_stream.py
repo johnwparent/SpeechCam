@@ -1,7 +1,21 @@
 import cv2
-import sys, os, operator, math
+import sys, os, math, numpy as np
 
-def capture_webcam_image()
+def im_cap_driver():
+    im = capture_webcam_image()
+    im_gray = imtogray(im)
+    faces = detect_face(im_gray)
+    if len(faces) > 1:
+        print("Too many faces detected in image, please have other people step away from camera frame")
+        while True:
+            im = capture_webcam_image()
+            im_gray = imtogray(im)
+            faces = detect_face(im_gray)
+            if len(faces) < 2:
+                break
+    return faces, im
+
+def capture_webcam_image():
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         raise IOError("Webcam not available")
@@ -10,78 +24,85 @@ def capture_webcam_image()
     if not ret:
         raise IOError("No Capture on attempt, try restarting webcam or this program")
     cap.release()
-    return frame
+    return cv2.flip(frame, 1)
 
 def load_cascades():
     cur_dir = os.getcwd()
-    casc_dir = cur_dir+"/haarcascade_frontalface_default.xml"
-    return cv2.CascadeClassifier(casc_dir)
-
+    casc_dir = "/haarcascade_frontalface_default.xml"
+    return cv2.CascadeClassifier(cv2.data.haarcascades + casc_dir)
 
 def imtogray(im):
     return cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
 
 def detect_face(gray_im):
     detector = load_cascades()
-    faces = detector.detectMultiScale(
-        gray_im,
-        scaleFactor=1.1,
-        minNeighbors=5,
-        minSize = (10,10),
-        flags=cv2.cv.CV_HAAR_SCALE_IMAGE
-    )
+    faces = detector.detectMultiScale(gray_im, 1.3, 5)
     return faces
 
 def display_bbox(bbox, im):
-    (x, y, width, height) = bbox
+    x, y, w, h = bbox
     cv2.rectangle(im,(x,y), (x+w, y+h), (255, 0, 0), thickness=4)
     return im
 
-def image_quadrant(im, bbox):
-    h, w, _ = im.shape
+def image_quadrant(im, bbox, ideal_quad):
+    im_h, im_w, _ = im.shape
+    x,y,w,h = bbox
+
     quadrants = {}
-    quadrants["ul"] = ((0,0),(w/2,h/2))
-    quadrants["ur"] = ((w/2,h/2),(w,0))
-    quadrants["ll"] = ((0,h/2),(w/2,h))
-    quadrants["lr"] = ((w/2,h/2),(w,h))
+    quadrants["ul"] = ((0,0),(im_w//2,im_h//2))
+    quadrants["ur"] = ((im_w//2,0),(im_w,im_h//2))
+    quadrants["ll"] = ((0,im_h//2),(im_w//2,im_h))
+    quadrants["lr"] = ((im_w//2,im_h//2),(im_w,im_h))
 
-    def compare_tuples(t1, t2, oper):
-        x = t1[0] oper t2[0]
-        y = t1[1] oper t2[1]
-        return x and y
+    def is_inside(bbox_center):
+        quad = quadrants[ideal_quad]
+        x,y = bbox_center
+        u_corner = quad[0]
+        l_corner = quad[1]
+        if x > u_corner[0] and x < l_corner[0] and y > u_corner[1] and y < l_corner[1]:
+            return True
+        return False
 
-    def compute_distance(pt1, pt2):
-        dist_x = pt2[0] - pt1[0]
-        dist_y = pt2[1] - pt1[1]
-        return math.sqrt(dist_x**2 + dist_y**2)
+    def compute_bbox_center():
+        xmid = (x+w+x)//2
+        ymid = (y+h+y)//2
+        return (xmid, ymid)
 
-    def find_nearest_quadrant():
-        (x,y,w,h) = bbox
-        corners = ((x,y),(x+w,y+h))
-        closest = (2**64,2**64)
-        closest_quad = ""
-        is_inside = False
-        for quadrant in quadrants:
-            upper = compare_tuples(corners[0], quadrants[quadrant][0], operator.gt)
-            lower = compare_tuples(corners[1], quadrants[quadrant][1], operator.lt)
-            if upper and lower:
-                is_inside = True
-                closest = (0,0)
-                closest_quad = quadrant
-            else:
-                dist_u = compute_distance(corner[0], quadrants[quadrant][0])
-                dist_l = compute_distance(corner[1], quadrants[quadrant][1])
-                if dist_u < closest[0] and dist_l < closest[1]:
-                    closest = (dist_u, dist_l)
-                    closest_quad = quadrant
-        return closest_quad, is_inside
+    def compute_quadrant_center(quad):
+        pt1 = quadrants[quad][0]
+        pt2 = quadrants[quad][1]
+        x_mid = (pt1[0] + pt2[0])//2
+        y_mid = (pt1[1] + pt2[1])//2
+        return (x_mid, y_mid)
 
-    return find_nearest_quadrant()
+    def compute_angle(center1, center2):
+        diff_x = center1[0] - center2[0]
+        diff_y = center1[1] - center2[1]
+        diff_y = -diff_y
+        angle = np.arctan2(diff_y,diff_x)
+        return angle
 
-def determine_direction_to_move(im, bbox):
-    closest, is_inside = image_quadrant(im, bbox)
-    if not is_inside:
-        # need to compute direction to move to aquire closest
-        pass
-    else:
-        return None
+    center = compute_bbox_center()
+    found = is_inside(center)
+    angle = 0
+    if not found:
+        q_center = compute_quadrant_center(ideal_quad)
+        angle = compute_angle(q_center, center)
+
+    return found, angle
+
+
+def determine_direction_to_move(angle):
+    fst = (0, math.pi/2)
+    snd = (math.pi/2, math.pi)
+    trd = (-math.pi, -math.pi/2)
+    fth = (-math.pi/2, 0)
+    quads = [fst, snd, trd, fth]
+    quad_names = {fst: "ur",snd:"ul",trd:"ll",fth:"lr"}
+    for quad in quads:
+        if quad[0] <= angle < quad[1]:
+            return quad_names[quad]
+    raise RuntimeError("Angle not found in unit circle, math has broken")
+
+def save(image):
+    cv2.imwrite("Selfie.jpg", image)
