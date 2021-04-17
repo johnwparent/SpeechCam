@@ -19,6 +19,5 @@ setup(name="SpeechCam",
                       "SpeechRecognition",
                       "numpy",
                       "pyttsx3",
-                      "pyaudio"
                       ],
     )
