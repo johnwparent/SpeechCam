@@ -1,8 +1,8 @@
 import sys, os, time
 import argparse
-import speech.stt as stt
-import speech.tts as tts
-from image_processing import webcam_stream as ws
+from .speech import stt
+from .speech import tts
+from .image_processing import webcam_stream as ws
 
 directions_to_abbr = {"upper right":"ur", "upper left":"ul", "bottom left":"ll", "bottom right":"lr"}
 
@@ -116,8 +116,6 @@ def main(argv=None):
     if not len(faces):
         speech_out.speak("Camera exiting. No image captured")
         return(0)
-    import pdb; pdb.set_trace()
-
     new_im = direct_user(speech_out,desired_quad,faces[0],im)
     ws.save(new_im)
     speech_out.speak("Image captured and saved. Thank you for using SpeechCam! The program will now exit")
