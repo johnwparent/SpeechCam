@@ -14,6 +14,7 @@ setup(name="SpeechCam",
      packages=find_packages(),
      py_modules=["SpeechCam","image_processing","speech"],
      url="https://github.com/johnwparent/SpeechCam",
+     entry_points={"console_scripts":['SpeechCam = SpeechCam:main']}
      install_requires=["opencv-python",
                       "SpeechRecognition",
                       "numpy",
