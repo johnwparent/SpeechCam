@@ -10,6 +10,9 @@ To operate SpeechCam, a camera and microphone must be accesible to the program.
 ## Dependencies
 PyAudio is a requirement for this project to capture microphone input from user. Installation of this dependency can be difficult at times. PyAudio can be pip installed. However this can often fail due to problems with particular architectures. If that is the case, please downloand and install PyAudio from [this](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio) source for the architecture and python version SpeechCam will be executed by.
 
+[OpenCv](https://opencv.org/) is another dependency of SpeechCam that can provie diffuclt to work with on installation. If running into issues with OpenCV during runtime, please refer to OpenCv documentation on OpenCV for python.
+
+Follow all other steps as required by installation.
 # Installing and Running
 To install and run SpeechCam, after installing PyAudio for the same python being used to run SpeechCam, clone this repo into a desired directory, navigate to the root of this directory, and run:
 
@@ -21,7 +24,7 @@ Upon a sucessful installation, SpeechCam can be executed by executing command
 
 or by
 
-```$ python -m SpeechCam```
+```$ python3 -m SpeechCam```
 
 It is recommended to use a Python virtual environment to install and run SpeechCam
 

@@ -1,4 +1,4 @@
 SpeechRecognition>3.7.0
 pyaudio
-pocketsphinx
+opencv-python
 pyttsx3

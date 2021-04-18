@@ -63,6 +63,7 @@ def find_frame(speech_out):
             for _ in range(2):
                 direc = request_move(speech_out, opt)
                 direc()
+                time.sleep(0.5)
             time.sleep(1)
             faces, im = ws.im_cap_driver()
             if len(faces):
